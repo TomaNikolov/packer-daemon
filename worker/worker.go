@@ -4,63 +4,58 @@ import (
 	"log"
 	"sync"
 
-	"github.com/nabeken/aws-go-sqs/queue"
-	"github.com/nabeken/aws-go-sqs/queue/option"
-	"github.com/stripe/aws-go/gen/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/tomanikolov/packer-daemon/builder"
+	"github.com/tomanikolov/packer-daemon/types"
 )
 
-var defaultStackName = "golang-sqsl-worker-example"
-
-type HandlerFunc func(msg *sqs.Message) error
-
-func (f HandlerFunc) HandleMessage(msg *sqs.Message) error {
-	return f(msg)
-}
-
-type Handler interface {
-	HandleMessage(msg *sqs.Message) error
-}
-
-func Start(q *queue.Queue, h Handler) {
+// Start ...
+func Start(q *sqs.SQS, config types.Config) {
+	// URL to our queue
+	log.Println("worker: Start polling")
 	for {
-		log.Println("worker: Start polling")
-		messages, err := q.ReceiveMessage(option.MaxNumberOfMessages(10))
+		result, err := q.ReceiveMessage(&sqs.ReceiveMessageInput{
+			QueueUrl: &config.QueueURL,
+		})
+
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		if len(messages) > 0 {
-			run(q, h, messages)
+
+		if len(result.Messages) > 0 {
+			run(q, result.Messages, config)
 		}
 	}
 }
 
 // poll launches goroutine per received message and wait for all message to be processed
-func run(q *queue.Queue, h Handler, messages []sqs.Message) {
+func run(q *sqs.SQS, messages []*sqs.Message, c types.Config) {
 	numMessages := len(messages)
 	log.Printf("worker: Received %d messages", numMessages)
-
 	var wg sync.WaitGroup
 	wg.Add(numMessages)
 	for i := range messages {
 		go func(m *sqs.Message) {
-			// launch goroutine
-			log.Println("worker: Spawned worker goroutine")
 			defer wg.Done()
-			if err := handleMessage(q, m, h); err != nil {
+			_, err := handleMessage(q, m, c)
+			if err != nil {
 				log.Println(err)
 			}
-		}(&messages[i])
+		}(messages[i])
 	}
 
 	wg.Wait()
 }
 
-func handleMessage(q *queue.Queue, m *sqs.Message, h Handler) error {
-	var err error
-	err = h.HandleMessage(m)
+func handleMessage(q *sqs.SQS, m *sqs.Message, c types.Config) (*sqs.DeleteMessageOutput, error) {
+	err := builder.Start(*m.Body, c)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return q.DeleteMessage(m.ReceiptHandle)
+
+	return q.DeleteMessage(&sqs.DeleteMessageInput{
+		QueueUrl:      &c.QueueURL,
+		ReceiptHandle: m.ReceiptHandle,
+	})
 }

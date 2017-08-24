@@ -1,28 +1,54 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"path"
 
-	"github.com/nabeken/aws-go-sqs/queue"
-	"github.com/packer-daemon/worker"
-	"github.com/stripe/aws-go/gen/sqs"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/tomanikolov/packer-daemon/types"
+	"github.com/tomanikolov/packer-daemon/utils"
+	"github.com/tomanikolov/packer-daemon/worker"
 )
 
 func main() {
-	flag.Parse()
 
-	q, err := NewSQSQueue(
-		sqs.New(aws.DetectCreds("", "", ""), "ap-northeast-1", nil),
-		*flagQueue,
-	)
+	userDir, err := utils.GetUserDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	worker.Start(q, worker.HandlerFunc(Print))
+	configPath := flag.String("config", path.Join(userDir, ".packer-daemon-config.json"), "Path to config file")
+	flag.Parse()
+	fmt.Println("path: " + *configPath)
+
+	daemonConfig, err := readConfig(*configPath)
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	q := sqs.New(sess, &aws.Config{
+		Region:      aws.String(daemonConfig.AwsRegion),
+		Credentials: credentials.NewStaticCredentials(daemonConfig.AwsPublicKey, daemonConfig.AwsPriveteKey, ""),
+	})
+
+	worker.Start(q, daemonConfig)
 }
 
-func NewSQSQueue(s *sqs.SQS, name string) (*queue.Queue, error) {
-	return queue.New(s, name)
+func readConfig(configPath string) (types.Config, error) {
+	file, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config := types.Config{}
+	err = json.Unmarshal(file, &config)
+
+	return config, err
 }
