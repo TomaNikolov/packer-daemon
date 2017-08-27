@@ -21,3 +21,8 @@ type BuildRequest struct {
 	PackerOptions string `json:"packerOptions"`
 	Stage         string `json:"stage"`
 }
+
+// Printer ...
+type Printer interface {
+	Print(message string)
+}

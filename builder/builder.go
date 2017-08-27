@@ -8,7 +8,9 @@ import (
 
 	"github.com/tomanikolov/packer-daemon/constants"
 	"github.com/tomanikolov/packer-daemon/git"
+	"github.com/tomanikolov/packer-daemon/logger"
 	"github.com/tomanikolov/packer-daemon/packer"
+	"github.com/tomanikolov/packer-daemon/printer"
 	"github.com/tomanikolov/packer-daemon/types"
 	"github.com/tomanikolov/packer-daemon/utils"
 )
@@ -20,6 +22,7 @@ func Start(buildMessage string, config types.Config) error {
 		return err
 	}
 
+	logger := getLogger()
 	userDir, err := utils.GetUserDir()
 	if err != nil {
 		return err
@@ -31,6 +34,8 @@ func Start(buildMessage string, config types.Config) error {
 	if err != nil {
 		return err
 	}
+
+	logger.Log("Repository cloned!")
 
 	// TODO: fix PlainOpen repository
 	// err = git.Checkout(pathToRepository, buildRequest.Branch)
@@ -53,7 +58,6 @@ func getBuildRequest(buildMessage string) (types.BuildRequest, error) {
 }
 
 func deleteRepository(pathToRepository string) error {
-	fmt.Println("remove " + pathToRepository)
 	err := os.RemoveAll(pathToRepository)
 	fmt.Println(err)
 	return err
@@ -61,4 +65,10 @@ func deleteRepository(pathToRepository string) error {
 
 func getEnvVariables(config types.Config) string {
 	return fmt.Sprintf(constants.PackerEnvTemplate, config.Username, config.Password, config.StoragePath)
+}
+
+func getLogger() logger.Logger {
+	consolePrinter := printer.NewConsolePrinter()
+	queuePrinter := printer.NewQueuePrinter()
+	return logger.NewLogger([]types.Printer{consolePrinter, queuePrinter})
 }
