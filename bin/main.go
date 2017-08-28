@@ -8,10 +8,6 @@ import (
 	"log"
 	"path"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/tomanikolov/packer-daemon/types"
 	"github.com/tomanikolov/packer-daemon/utils"
 	"github.com/tomanikolov/packer-daemon/worker"
@@ -28,17 +24,8 @@ func main() {
 	flag.Parse()
 	fmt.Println("path: " + *configPath)
 
-	daemonConfig, err := readConfig(*configPath)
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-
-	q := sqs.New(sess, &aws.Config{
-		Region:      aws.String(daemonConfig.AwsRegion),
-		Credentials: credentials.NewStaticCredentials(daemonConfig.AwsPublicKey, daemonConfig.AwsPriveteKey, ""),
-	})
-
-	worker.Start(q, daemonConfig)
+	config, err := readConfig(*configPath)
+	worker.Start(config)
 }
 
 func readConfig(configPath string) (types.Config, error) {

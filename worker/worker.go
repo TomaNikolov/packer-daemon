@@ -1,61 +1,71 @@
 package worker
 
 import (
+	"encoding/json"
 	"log"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/tomanikolov/packer-daemon/builder"
+	"github.com/tomanikolov/packer-daemon/logger"
+	"github.com/tomanikolov/packer-daemon/printer"
+	"github.com/tomanikolov/packer-daemon/queue"
 	"github.com/tomanikolov/packer-daemon/types"
 )
 
 // Start ...
-func Start(q *sqs.SQS, config types.Config) {
-	// URL to our queue
+func Start(config types.Config) {
 	log.Println("worker: Start polling")
+	queue := queue.NewQueue(config)
 	for {
-		result, err := q.ReceiveMessage(&sqs.ReceiveMessageInput{
-			QueueUrl: &config.QueueURL,
-		})
-
+		result, err := queue.ReceiveMessage(config.QueueURL)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
 		if len(result.Messages) > 0 {
-			run(q, result.Messages, config)
+			run(queue, result.Messages, config)
 		}
 	}
 }
 
 // poll launches goroutine per received message and wait for all message to be processed
-func run(q *sqs.SQS, messages []*sqs.Message, c types.Config) {
+func run(q queue.Queue, messages []types.Message, c types.Config) {
 	numMessages := len(messages)
-	log.Printf("worker: Received %d messages", numMessages)
 	var wg sync.WaitGroup
 	wg.Add(numMessages)
-	for i := range messages {
-		go func(m *sqs.Message) {
+	for _, message := range messages {
+		go func(m types.Message) {
 			defer wg.Done()
-			_, err := handleMessage(q, m, c)
+			err := handleMessage(q, m, c)
 			if err != nil {
 				log.Println(err)
 			}
-		}(messages[i])
+		}(message)
 	}
 
 	wg.Wait()
 }
 
-func handleMessage(q *sqs.SQS, m *sqs.Message, c types.Config) (*sqs.DeleteMessageOutput, error) {
-	err := builder.Start(*m.Body, c)
+func handleMessage(q queue.Queue, m types.Message, c types.Config) error {
+	buildRequest, err := getBuildRequest(*m.Body)
+	logger := getLogger(buildRequest.LogQURL, q)
+	err = builder.Start(buildRequest, c, logger)
 	if err != nil {
-		return nil, err
+		//return err
 	}
 
-	return q.DeleteMessage(&sqs.DeleteMessageInput{
-		QueueUrl:      &c.QueueURL,
-		ReceiptHandle: m.ReceiptHandle,
-	})
+	return q.DeleteMessage(c.QueueURL, *m.ReceiptHandle)
+}
+
+func getBuildRequest(buildMessage string) (types.BuildRequest, error) {
+	buildRequest := types.BuildRequest{}
+	err := json.Unmarshal([]byte(buildMessage), &buildRequest)
+	return buildRequest, err
+}
+
+func getLogger(qLogURL string, q queue.Queue) logger.Logger {
+	consolePrinter := printer.NewConsolePrinter()
+	queuePrinter := printer.NewQueuePrinter(qLogURL, q)
+	return logger.NewLogger([]types.Printer{consolePrinter, queuePrinter})
 }
