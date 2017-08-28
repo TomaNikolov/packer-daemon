@@ -20,9 +20,29 @@ type BuildRequest struct {
 	TemplateName  string `json:"templateName"`
 	PackerOptions string `json:"packerOptions"`
 	Stage         string `json:"stage"`
+	LogQURL       string `json:"logQURL"`
 }
 
 // Printer ...
 type Printer interface {
 	Print(message string)
+}
+
+// SendMessageOutput ...
+type SendMessageOutput struct {
+	MessageID      *string
+	SequenceNumber *string
+}
+
+// ReciveMessageOutput ...
+type ReciveMessageOutput struct {
+	Messages []Message
+}
+
+// Message ...
+type Message struct {
+	Attributes    map[string]*string
+	Body          *string
+	MessageID     *string
+	ReceiptHandle *string
 }

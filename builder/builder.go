@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -10,19 +9,12 @@ import (
 	"github.com/tomanikolov/packer-daemon/git"
 	"github.com/tomanikolov/packer-daemon/logger"
 	"github.com/tomanikolov/packer-daemon/packer"
-	"github.com/tomanikolov/packer-daemon/printer"
 	"github.com/tomanikolov/packer-daemon/types"
 	"github.com/tomanikolov/packer-daemon/utils"
 )
 
 // Start ...
-func Start(buildMessage string, config types.Config) error {
-	buildRequest, err := getBuildRequest(buildMessage)
-	if err != nil {
-		return err
-	}
-
-	logger := getLogger()
+func Start(buildRequest types.BuildRequest, config types.Config, logger logger.Logger) error {
 	userDir, err := utils.GetUserDir()
 	if err != nil {
 		return err
@@ -46,15 +38,9 @@ func Start(buildMessage string, config types.Config) error {
 	// }
 
 	pathToTemplate := path.Join(pathToRepository, constants.TemplateRelativePath, buildRequest.TemplateName)
-	err = packer.Build(pathToTemplate, getEnvVariables(config), buildRequest.PackerOptions)
+	err = packer.Build(pathToTemplate, getEnvVariables(config), buildRequest.PackerOptions, &logger)
 
 	return err
-}
-
-func getBuildRequest(buildMessage string) (types.BuildRequest, error) {
-	buildRequest := types.BuildRequest{}
-	err := json.Unmarshal([]byte(buildMessage), &buildRequest)
-	return buildRequest, err
 }
 
 func deleteRepository(pathToRepository string) error {
@@ -64,11 +50,6 @@ func deleteRepository(pathToRepository string) error {
 }
 
 func getEnvVariables(config types.Config) string {
+	// TODO: this shold return [] of env varibles
 	return fmt.Sprintf(constants.PackerEnvTemplate, config.Username, config.Password, config.StoragePath)
-}
-
-func getLogger() logger.Logger {
-	consolePrinter := printer.NewConsolePrinter()
-	queuePrinter := printer.NewQueuePrinter()
-	return logger.NewLogger([]types.Printer{consolePrinter, queuePrinter})
 }
