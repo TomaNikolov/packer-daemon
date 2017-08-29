@@ -21,23 +21,21 @@ func Start(buildRequest types.BuildRequest, config types.Config, logger logger.L
 	}
 
 	pathToRepository := path.Join(userDir, constants.RepositoryName)
-	err = git.Clone(config.Repository, pathToRepository, config.GitUsername, config.GitPassword)
+	logger.Log(fmt.Sprintf("Clonning repository %s", config.Repository))
+	workTree, err := git.Clone(config.Repository, pathToRepository, config.GitUsername, config.GitPassword, &logger)
 	defer deleteRepository(pathToRepository)
 	if err != nil {
 		return err
 	}
 
-	logger.Log("Repository cloned!")
-
-	// TODO: fix PlainOpen repository
-	// err = git.Checkout(pathToRepository, buildRequest.Branch)
-	// if err != nil {
-	// 	fmt.Print("Checkout error " + pathToRepository)
-	// 	fmt.Println(err)
-	// 	return err
-	// }
+	logger.Log(fmt.Sprintf("Checkout bracnch: %s", buildRequest.Branch))
+	err = git.Checkout(workTree, buildRequest.Branch)
+	if err != nil {
+		return err
+	}
 
 	pathToTemplate := path.Join(pathToRepository, constants.TemplateRelativePath, buildRequest.TemplateName)
+	logger.Log(fmt.Sprintf("Running pcaker build whit options : %s", buildRequest.PackerOptions))
 	err = packer.Build(pathToTemplate, getEnvVariables(config), buildRequest.PackerOptions, &logger)
 
 	return err
@@ -49,7 +47,10 @@ func deleteRepository(pathToRepository string) error {
 	return err
 }
 
-func getEnvVariables(config types.Config) string {
-	// TODO: this shold return [] of env varibles
-	return fmt.Sprintf(constants.PackerEnvTemplate, config.Username, config.Password, config.StoragePath)
+func getEnvVariables(config types.Config) []string {
+	return []string{
+		fmt.Sprintf(constants.UserNameEnv, config.Username),
+		fmt.Sprintf(constants.PasswordEnv, config.Password),
+		fmt.Sprintf(constants.StoragePathEnv, config.StoragePath),
+	}
 }

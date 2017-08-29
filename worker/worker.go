@@ -52,6 +52,7 @@ func handleMessage(q queue.Queue, m types.Message, c types.Config) error {
 	logger := getLogger(buildRequest.LogQURL, q)
 	err = builder.Start(buildRequest, c, logger)
 	if err != nil {
+		logger.LogError(err.Error())
 		//return err
 	}
 

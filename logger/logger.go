@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"fmt"
+
 	"github.com/tomanikolov/packer-daemon/types"
 )
 
@@ -19,6 +21,13 @@ func NewLogger(printers []types.Printer) Logger {
 // Log ..
 func (logger *Logger) Log(message string) {
 	for _, printer := range logger.Printers {
-		printer.Print(message)
+		printer.Print(fmt.Sprintf("[Info] %s", message))
+	}
+}
+
+// LogError ..
+func (logger *Logger) LogError(message string) {
+	for _, printer := range logger.Printers {
+		printer.Print(fmt.Sprintf("[Error] %s", message))
 	}
 }
