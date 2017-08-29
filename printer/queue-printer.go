@@ -1,6 +1,8 @@
 package printer
 
 import (
+	"fmt"
+
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/tomanikolov/packer-daemon/queue"
 )
@@ -25,5 +27,5 @@ func NewQueuePrinter(qURL string, q queue.Queue) QueuePrinter {
 
 // Print ...
 func (queuePrinter QueuePrinter) Print(message string) {
-	queuePrinter.queue.SendMessage(queuePrinter.qURL, message, queuePrinter.messageGroupID)
+	queuePrinter.queue.SendMessage(queuePrinter.qURL, fmt.Sprintf("%s\n", message), queuePrinter.messageGroupID)
 }
