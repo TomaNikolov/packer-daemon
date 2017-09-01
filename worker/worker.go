@@ -53,7 +53,6 @@ func handleMessage(q queue.Queue, m types.Message, c types.Config) error {
 	err = builder.Start(buildRequest, c, logger)
 	if err != nil {
 		logger.LogError(err.Error())
-		//return err
 	}
 
 	return q.DeleteMessage(c.QueueURL, *m.ReceiptHandle)

@@ -11,25 +11,25 @@ import (
 )
 
 // Build ...
-func Build(templatePath string, envVariables []string, options string, l *logger.Logger) error {
+func Build(cwd string, templatePath string, envVariables []string, options string, l *logger.Logger) error {
 	commandArgs := []string{"build"}
+
 	if len(options) > 0 {
 		commandArgs = append(commandArgs, fmt.Sprintf("%s %s", "--var", options))
 	}
 
+	l.Log(strings.Join(envVariables, ", "))
+	commandArgs = append(commandArgs, templatePath)
 	logStreamerStdout := logger.NewLogstreamer(l, constants.Stdout, false)
 	logStreamerStderr := logger.NewLogstreamer(l, constants.Stderr, false)
-
-	commandArgs = append(commandArgs, templatePath)
-
-	cmd := exec.Command("packer", commandArgs...)
 	env := os.Environ()
 	env = append(env, envVariables...)
+
+	cmd := exec.Command("packer", commandArgs...)
 	cmd.Env = env
-	l.Log(strings.Join(env, ", "))
 	cmd.Stdout = logStreamerStdout
 	cmd.Stderr = logStreamerStderr
-	err := cmd.Run()
+	cmd.Dir = cwd
 
-	return err
+	return cmd.Run()
 }

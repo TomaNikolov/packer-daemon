@@ -11,7 +11,11 @@ type Config struct {
 	AwsRegion     string `json:"awsRegion"`
 	StoragePath   string `json:"storagePath"`
 	Repository    string `json:"repository"`
-	QueueURL      string `json:"queueURL"`
+	QueueURL      string `json:"queueUrl"`
+	GovcPassword  string `json:"govcPassword"`
+	GovcUsername  string `json:"govcUsername"`
+	GovcURL       string `json:"govcUrl"`
+	GovcInsecure  string `json:"govcInsecure"`
 }
 
 // BuildRequest ...

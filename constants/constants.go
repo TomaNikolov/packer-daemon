@@ -2,7 +2,7 @@ package constants
 
 const (
 	// RepositoryName ...
-	RepositoryName = "fusion-build-tools"
+	RepositoryName = "fusion-build-templates"
 
 	// TemplateRelativePath ...
 	TemplateRelativePath = "macos/packer/"
@@ -15,6 +15,18 @@ const (
 
 	// StoragePathEnv ...
 	StoragePathEnv = "STORAGE_PATH=%s"
+
+	// GovcPasswordEnv ...
+	GovcPasswordEnv = "GOVC_PASSWORD=%s"
+
+	// GovcInsecureEnv ...
+	GovcInsecureEnv = "GOVC_INSECURE=%s"
+
+	// GovcURLEnv ...
+	GovcURLEnv = "GOVC_URL=%s"
+
+	// GovcUsernameEnv ...
+	GovcUsernameEnv = "GOVC_USERNAME=%s"
 
 	// Stdout ...
 	Stdout = "stdout"
