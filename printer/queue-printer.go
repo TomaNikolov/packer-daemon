@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	uuid "github.com/nu7hatch/gouuid"
@@ -27,5 +28,6 @@ func NewQueuePrinter(qURL string, q queue.Queue) QueuePrinter {
 
 // Print ...
 func (queuePrinter QueuePrinter) Print(message string) {
-	queuePrinter.queue.SendMessage(queuePrinter.qURL, fmt.Sprintf("%s\n", message), queuePrinter.messageGroupID)
+	data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s\n", message)))
+	queuePrinter.queue.SendMessage(queuePrinter.qURL, data, queuePrinter.messageGroupID)
 }
