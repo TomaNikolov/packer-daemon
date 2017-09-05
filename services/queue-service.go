@@ -1,4 +1,4 @@
-package queue
+package services
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -9,13 +9,13 @@ import (
 	"github.com/tomanikolov/packer-daemon/types"
 )
 
-// Queue ...
-type Queue struct {
+// QueueService ...
+type QueueService struct {
 	sqs *sqs.SQS
 }
 
-// NewQueue ...
-func NewQueue(c types.Config) Queue {
+// NewQueueService ...
+func NewQueueService(c types.Config) QueueService {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -25,18 +25,18 @@ func NewQueue(c types.Config) Queue {
 		Credentials: credentials.NewStaticCredentials(c.AwsPublicKey, c.AwsPriveteKey, ""),
 	})
 
-	return Queue{
+	return QueueService{
 		sqs: sqs,
 	}
 }
 
 // SendMessage ...
-func (q Queue) SendMessage(qURL, message, messageGroupID string) (*types.SendMessageOutput, error) {
+func (service QueueService) SendMessage(qURL, message, messageGroupID string) (*types.SendMessageOutput, error) {
 	//u, _ := uuid.NewV4()
 	//messageGroupId := u.String()
 	u, _ := uuid.NewV4()
 	messageDeduplicationID := u.String()
-	s, err := q.sqs.SendMessage(&sqs.SendMessageInput{
+	s, err := service.sqs.SendMessage(&sqs.SendMessageInput{
 		QueueUrl:               &qURL,
 		MessageBody:            &message,
 		MessageGroupId:         &messageGroupID,
@@ -56,8 +56,8 @@ func (q Queue) SendMessage(qURL, message, messageGroupID string) (*types.SendMes
 }
 
 // ReceiveMessage ...
-func (q Queue) ReceiveMessage(qURL string) (*types.ReciveMessageOutput, error) {
-	result, err := q.sqs.ReceiveMessage(&sqs.ReceiveMessageInput{
+func (service QueueService) ReceiveMessage(qURL string) (*types.ReciveMessageOutput, error) {
+	result, err := service.sqs.ReceiveMessage(&sqs.ReceiveMessageInput{
 		QueueUrl: &qURL,
 	})
 
@@ -65,7 +65,7 @@ func (q Queue) ReceiveMessage(qURL string) (*types.ReciveMessageOutput, error) {
 		return nil, err
 	}
 
-	messages := q.mapMessages(result.Messages)
+	messages := service.mapMessages(result.Messages)
 	reciveMessageOutput := &types.ReciveMessageOutput{
 		Messages: messages,
 	}
@@ -74,8 +74,8 @@ func (q Queue) ReceiveMessage(qURL string) (*types.ReciveMessageOutput, error) {
 }
 
 // DeleteMessage ...
-func (q Queue) DeleteMessage(qURL string, receiptHandle string) error {
-	_, err := q.sqs.DeleteMessage(&sqs.DeleteMessageInput{
+func (service QueueService) DeleteMessage(qURL string, receiptHandle string) error {
+	_, err := service.sqs.DeleteMessage(&sqs.DeleteMessageInput{
 		QueueUrl:      &qURL,
 		ReceiptHandle: &receiptHandle,
 	})
@@ -83,7 +83,7 @@ func (q Queue) DeleteMessage(qURL string, receiptHandle string) error {
 	return err
 }
 
-func (q Queue) mapMessages(sqsMessages []*sqs.Message) []types.Message {
+func (service QueueService) mapMessages(sqsMessages []*sqs.Message) []types.Message {
 	messages := []types.Message{}
 	for _, m := range sqsMessages {
 		message := types.Message{
