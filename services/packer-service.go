@@ -1,4 +1,4 @@
-package packer
+package services
 
 import (
 	"fmt"
@@ -10,18 +10,30 @@ import (
 	"github.com/tomanikolov/packer-daemon/logger"
 )
 
+// PackerService ...
+type PackerService struct {
+	logger logger.Logger
+}
+
+// NewPackerService ...
+func NewPackerService(logger logger.Logger) PackerService {
+	return PackerService{
+		logger: logger,
+	}
+}
+
 // Build ...
-func Build(cwd string, templatePath string, envVariables []string, options string, l *logger.Logger) error {
+func (service *PackerService) Build(cwd string, templatePath string, envVariables []string, options string) error {
 	commandArgs := []string{"build"}
 
 	if len(options) > 0 {
 		commandArgs = append(commandArgs, fmt.Sprintf("%s %s", "--var", options))
 	}
 
-	l.Log(strings.Join(envVariables, ", "))
+	service.logger.Log(strings.Join(envVariables, ", "))
 	commandArgs = append(commandArgs, templatePath)
-	logStreamerStdout := logger.NewLogstreamer(l, constants.Stdout, false)
-	logStreamerStderr := logger.NewLogstreamer(l, constants.Stderr, false)
+	logStreamerStdout := logger.NewLogstreamer(&service.logger, constants.Stdout, false)
+	logStreamerStderr := logger.NewLogstreamer(&service.logger, constants.Stderr, false)
 	env := os.Environ()
 	env = append(env, envVariables...)
 

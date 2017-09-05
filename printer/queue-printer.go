@@ -5,18 +5,18 @@ import (
 	"fmt"
 
 	uuid "github.com/nu7hatch/gouuid"
-	"github.com/tomanikolov/packer-daemon/queue"
+	"github.com/tomanikolov/packer-daemon/services"
 )
 
 // QueuePrinter ...
 type QueuePrinter struct {
 	qURL           string
-	queue          queue.Queue
+	queue          services.QueueService
 	messageGroupID string
 }
 
 // NewQueuePrinter ...
-func NewQueuePrinter(qURL string, q queue.Queue) QueuePrinter {
+func NewQueuePrinter(qURL string, q services.QueueService) QueuePrinter {
 	u, _ := uuid.NewV4()
 	messageGroupID := u.String()
 	return QueuePrinter{

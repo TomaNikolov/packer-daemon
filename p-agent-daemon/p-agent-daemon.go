@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	configPath := flag.String("config", path.Join(userDir, ".packer-daemon-config.json"), "Path to config file")
+	configPath := flag.String("config", path.Join(userDir, ".p-agent-daemon-config.json"), "Path to config file")
 	flag.Parse()
 	fmt.Println("path: " + *configPath)
 
