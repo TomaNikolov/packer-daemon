@@ -2,20 +2,22 @@ package types
 
 // Config ...
 type Config struct {
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-	GitUsername   string `json:"gitUsername"`
-	GitPassword   string `json:"gitPassword"`
-	AwsPublicKey  string `json:"awsPublicKey"`
-	AwsPriveteKey string `json:"awsPriveteKey"`
-	AwsRegion     string `json:"awsRegion"`
-	StoragePath   string `json:"storagePath"`
-	Repository    string `json:"repository"`
-	QueueURL      string `json:"queueUrl"`
-	GovcPassword  string `json:"govcPassword"`
-	GovcUsername  string `json:"govcUsername"`
-	GovcURL       string `json:"govcUrl"`
-	GovcInsecure  string `json:"govcInsecure"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	GitUsername    string `json:"gitUsername"`
+	GitPassword    string `json:"gitPassword"`
+	AwsPublicKey   string `json:"awsPublicKey"`
+	AwsPriveteKey  string `json:"awsPriveteKey"`
+	AwsRegion      string `json:"awsRegion"`
+	StoragePath    string `json:"storagePath"`
+	Repository     string `json:"repository"`
+	QueueURL       string `json:"queueUrl"`
+	GovcPassword   string `json:"govcPassword"`
+	GovcUsername   string `json:"govcUsername"`
+	GovcURL        string `json:"govcUrl"`
+	GovcInsecure   string `json:"govcInsecure"`
+	GovcDataCenter string `json:"govcDataCente"`
+	GovcDataStore  string `json:"govcDataStore"`
 }
 
 // BuildRequest ...

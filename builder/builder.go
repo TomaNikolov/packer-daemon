@@ -57,5 +57,7 @@ func getEnvVariables(config types.Config) []string {
 		fmt.Sprintf(constants.GovcUsernameEnv, config.GovcUsername),
 		fmt.Sprintf(constants.GovcURLEnv, config.GovcURL),
 		fmt.Sprintf(constants.GovcInsecureEnv, config.GovcInsecure),
+		fmt.Sprintf(constants.GovcDataCenterEnv, config.GovcDataCenter),
+		fmt.Sprintf(constants.GovcDataStoreEnv, config.GovcDataStore),
 	}
 }
